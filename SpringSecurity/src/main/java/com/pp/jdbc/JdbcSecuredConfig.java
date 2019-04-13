@@ -1,66 +1,66 @@
-package com.pp.inmem;
+package com.pp.jdbc;
 
 import java.security.Principal;
+
+import javax.sql.DataSource;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @Configuration
-public class InMemConfig {
-	
+@EnableWebSecurity
+@Order(value=101)
+public class JdbcSecuredConfig extends WebSecurityConfigurerAdapter{
+
 	@Bean
-	UserDetailsManager userDetailsServiceInMm() {
-		return new InMemoryUserDetailsManager();
+	UserDetailsManager userDetailsManagerJdbc(DataSource dataSource) {
+		JdbcUserDetailsManager detailsManager = new JdbcUserDetailsManager();
+		detailsManager.setDataSource(dataSource);
+		return detailsManager;
 	}
 	
-	@SuppressWarnings("deprecation")
-	@Bean	
-	InitializingBean initializerInMm (@Qualifier("userDetailsServiceInMm") UserDetailsManager manager) {
-		return () -> {
-			UserDetails pen = User
-				.withDefaultPasswordEncoder()
-				.username("pen")
-				.password("pen")
-				.roles("USER")
-				.build();
-			manager.createUser(pen);
-			
-			UserDetails penny = User
+	
+	  @Bean 
+	  InitializingBean initializer(@Qualifier("userDetailsManagerJdbc") UserDetailsManager manager) { 
+			return () -> {
+				UserDetails pen = User
 					.withDefaultPasswordEncoder()
-					.username("penny")
-					.password("penny")
+					.username("nen")
+					.password("nen")
 					.roles("USER")
 					.build();
-			manager.createUser(penny);
-		};
-	}
-
-}
-
-
-@Configuration
-@EnableWebSecurity
-class SecurityConfig extends WebSecurityConfigurerAdapter {
+				manager.createUser(pen);
+				
+				UserDetails penny = User
+						.withDefaultPasswordEncoder()
+						.username("nenny")
+						.password("nenny")
+						.roles("USER")
+						.build();
+				manager.createUser(penny);
+			};
+	  }
+	 
+	
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		super.configure(http);
 		
-		// authenticate requests using basic authentication
 		http
 			.httpBasic();
-		
-		// authorize all incoming requests
 		http
 			.authorizeRequests()
 			.anyRequest()
@@ -69,10 +69,11 @@ class SecurityConfig extends WebSecurityConfigurerAdapter {
 }
 
 @RestController
-class HelloController {
+class OlaDb {
 	
-	@GetMapping("/ola")
+	@GetMapping("/ola-db")
 	public String hello(Principal principal) {
-		return "Hello Mr. " + principal.getName();
+		return "Hello Mr. " + principal.getName() + " from db!";
 	}
+	
 }
